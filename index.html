@@ -471,71 +471,53 @@
         const analytics = getAnalytics(app);
 
         // Character count functionality
-        const taskNameInput = document.getElementById('taskName');
-        const charCountDisplay = document.getElementById('charCount');
-        
-        taskNameInput.addEventListener('input', () => {
-            const currentLength = taskNameInput.value.length;
-            charCountDisplay.textContent = `${currentLength}/50`;
-        });
+    function addTask() {
+        const taskName = document.getElementById("taskName").innerText;
+        const taskDescription = document.getElementById("taskDescription").value;
 
-        
-        const form = document.querySelector('.create-button');
-
-        form.addEventListener('click', function() {
-            const title = document.getElementById('taskName').innerText.trim();
-            const description = document.getElementById('taskDescription').value;
-            const priority = document.getElementById('attribute2').value;
-            const assignee = document.getElementById('attribute1').value;
-            const stages = document.getElementById('attribute3').value;
-            const status = document.getElementById('attribute4').value;
-            const storyPoints = document.getElementById('attribute5').value;
-            const type = document.getElementById('attribute7').value;
-
-            const tagElements = document.querySelectorAll('#attribute6 input[type="checkbox"]:checked');
-            const tags = Array.from(tagElements).map(checkbox => checkbox.value);
-
-            const taskName = document.getElementById('taskName').innerText.trim();
-            if (!taskName) {
-                alert('Please enter a task name before creating the task.');
-                return;
-            }
-
-            const id = generateUniqueId();
-            const createdTime = getFormattedDateTime();
-
-            // Save the task in local storage
-            const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-            const productTasks = JSON.parse(localStorage.getItem('product-backlog')) || [];
-            const editTime = [];
-            tasks.push({ title, description, priority, assignee, stages, status, storyPoints, tags, type, id, createdTime, editTime});
-            productTasks.push({ title, description, priority, assignee, stages, status, storyPoints, tags, type, id, createdTime, editTime})
-            localStorage.setItem('tasks', JSON.stringify(tasks));
-            localStorage.setItem('product-backlog', JSON.stringify(productTasks));
-
-            // Redirect with task title as query parameter
-            window.location.href = `overview.html?newTask=${encodeURIComponent(title)}`;
-        });
-
-        document.querySelector('.cancel-button').addEventListener('click', function() {
-            window.location.href = 'overview.html';
-        });
-
-        function generateUniqueId() {
-            return 'task-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+        if (taskName && taskDescription) {
+            db.collection("tasks").add({
+                name: taskName,
+                description: taskDescription,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                console.log("Task added successfully!");
+                clearForm(); // Clear form after submission
+                // Redirect with task title as query parameter (optional)
+                window.location.href = `overview.html?newTask=${encodeURIComponent(taskName)}`;
+            })
+            .catch((error) => {
+                console.error("Error adding task: ", error);
+            });
+        } else {
+            alert("Please fill in all fields.");
         }
+    }
 
-        function getFormattedDateTime() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
+    // Function to clear the form
+    function clearForm() {
+        document.getElementById("taskName").innerText = "";
+        document.getElementById("taskDescription").value = "";
+    }
 
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-        }
-    </script>
-</body>
-</html>
+    document.querySelector('.cancel-button').addEventListener('click', function() {
+        window.location.href = 'overview.html';
+    });
+
+    function generateUniqueId() {
+        return 'task-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    }
+
+    function getFormattedDateTime() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+</script>
